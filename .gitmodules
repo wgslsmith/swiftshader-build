@@ -1,0 +1,3 @@
+[submodule "swiftshader"]
+	path = swiftshader
+	url = https://github.com/google/swiftshader
