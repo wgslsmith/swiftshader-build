@@ -59,4 +59,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          gh release create ${{ steps.create-git-tag.outputs.TAG }} swiftshader-*.tar.gz
+          gh release create ${{ steps.create-git-tag.outputs.TAG }} swiftshader-*.tar.gz \
+            -n "google/swiftshader@${{ steps.create-git-tag.outputs.COMMIT }}"
