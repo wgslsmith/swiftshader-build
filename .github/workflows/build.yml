@@ -6,26 +6,38 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - Linux
+          - Windows
+        include:
+          - target: Linux
+            os: ubuntu-latest
+            artifact: linux64
+            build_script: build.sh
+
+          - target: Windows
+            os: windows-latest
+            artifact: win64
+            build_script: build.ps1
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
         with:
           submodules: true
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install ninja-build
-
       - name: Build swiftshader
-        run: ./build.sh
+        run: ./${{ matrix.build_script }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: swiftshader-linux64
-          path: build/Linux
+          name: swiftshader-${{ matrix.artifact }}
+          path: build/${{ matrix.target }}
 
   release:
     runs-on: ubuntu-20.04
@@ -50,7 +62,7 @@ jobs:
 
       - name: Prepare artifacts
         run: |
-          for target in linux64; do
+          for target in linux64 win64; do
             echo "${{ steps.create-git-tag.outputs.COMMIT }}" > swiftshader-$target/COMMIT
             tar -czf swiftshader-$target.tar.gz swiftshader-$target/*
           done
