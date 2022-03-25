@@ -7,7 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
@@ -25,5 +24,37 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: swiftshader-linux
+          name: swiftshader-linux64
           path: build/Linux
+
+  release:
+    runs-on: ubuntu-20.04
+    needs: build
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Create git tag
+        id: create-git-tag
+        run: |
+          tag="autobuild-$(date -u '+%Y-%m-%d-%H-%M')"
+          git tag $tag
+          git push origin $tag
+          echo "::set-output name=TAG::$tag"
+          echo "::set-output name=COMMIT::$(git --git-dir swiftshader/.git rev-parse HEAD)"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Prepare artifacts
+        run: |
+          for target in linux64; do
+            echo "${{ steps.create-git-tag.outputs.COMMIT }}" > swiftshader-$target/COMMIT
+            tar -czf swiftshader-$target.tar.gz swiftshader-$target/*
+          done
+
+      - name: Create release
+        run: |
+          gh release create ${{ steps.create-git-tag.outputs.TAG }} swiftshader-*.tar.gz
