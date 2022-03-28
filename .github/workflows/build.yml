@@ -6,6 +6,8 @@ on:
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         target:
@@ -21,8 +23,6 @@ jobs:
             os: windows-latest
             artifact: win64
             build_script: build.ps1
-
-    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout git repo
@@ -48,6 +48,7 @@ jobs:
   release:
     runs-on: ubuntu-20.04
     needs: build
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
